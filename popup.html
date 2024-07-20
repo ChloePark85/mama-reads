@@ -1,23 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
   <head>
-    <title>TTS Web Reader</title>
+    <meta charset="UTF-8" />
+    <title>Mama Reads</title>
     <style>
       body {
         width: 300px;
         padding: 10px;
+        font-family: "Malgun Gothic", "Nanum Gothic", sans-serif;
+      }
+      h1 {
+        text-align: center;
+        color: #4a4a4a;
       }
       select,
       input {
         margin-bottom: 10px;
+        width: 100%;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
       }
     </style>
   </head>
   <body>
+    <h1>Mama Reads</h1>
     <select id="voiceSelect">
-      <option value="44e0088af7e2c817a4b3c573cefbeab1">음성 1</option>
-      <option value="voice_id_2">음성 2</option>
-      <!-- 추가 음성 옵션들 -->
+      <option value="4811166482e481aea8f03a19955cc171">숙경 폰트</option>
+      <option value="41c04cbf66b813cabb6064b0a9ea0442">해솔 폰트</option>
+      <option value="47487a3f8ff5ca6fa7840f912a49e868">미소 폰트</option>
+      <option value="4d5e64ba59327574b2b7fb3739c47ea7">현정 폰트</option>
+      <option value="uka">날개 폰트</option>
+      <option value="465c8efcfa99a9adb75333263faa6fde">선희 폰트</option>
+      <option value="45acc7d18881c4fd842f2ef984cfbe96">은교 폰트</option>
     </select>
     <input
       type="range"
@@ -28,7 +51,10 @@
       value="1"
     />
     <span id="speedValue">1</span>
-    <button id="readPage">웹페이지 읽기</button>
+    <button id="readPageButton">전체 페이지 읽기</button>
+    <button id="readSelectedButton">선택 텍스트 읽기</button>
+    <button id="stopButton">읽기 중지</button>
+    <div id="errorMessage" style="color: red; margin-top: 10px"></div>
     <script src="popup.js"></script>
   </body>
 </html>

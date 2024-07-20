@@ -1,15 +1,33 @@
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+let currentAudio = null;
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "startReading") {
-    readText(request.text, request.voiceId, request.speed);
+    stopCurrentAudio();
+    readText(request.text, request.voiceId, request.speed)
+      .then(() => sendResponse({ status: "success" }))
+      .catch((error) =>
+        sendResponse({ status: "error", message: error.toString() })
+      );
+    return true; // Will respond asynchronously
+  } else if (request.action === "stopReading") {
+    stopCurrentAudio();
+    sendResponse({ status: "success" });
   }
 });
 
-function readText(text, voiceId, speed) {
+function stopCurrentAudio() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+}
+
+async function readText(text, voiceId, speed) {
   const sentences = text
     .split(/[.!?]+/)
     .filter((sentence) => sentence.trim() !== "");
 
-  sentences.forEach((sentence, index) => {
+  for (const sentence of sentences) {
     const payload = {
       mode: "openfont",
       sentences: [
@@ -25,23 +43,38 @@ function readText(text, voiceId, speed) {
       ],
     };
 
-    if (index < sentences.length - 1) {
-      payload.sentences.push({
-        type: "duration",
-        time: 0.2,
+    try {
+      const response = await fetch("http://61.250.94.154/tts", {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
       });
-    }
 
-    fetch("http://61.250.94.154/tts", {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
-    })
-      .then((response) => response.blob())
-      .then((blob) => {
-        const audio = new Audio(URL.createObjectURL(blob));
-        audio.play();
-      })
-      .catch((error) => console.error("Error:", error));
-  });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      if (!blob.type.startsWith("audio/")) {
+        throw new Error("The response is not an audio file");
+      }
+
+      await new Promise((resolve, reject) => {
+        currentAudio = new Audio(URL.createObjectURL(blob));
+        currentAudio.onended = resolve;
+        currentAudio.onerror = reject;
+        currentAudio.play().catch(reject);
+      });
+
+      // Add a small pause between sentences
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    } catch (error) {
+      console.error("Error in readText:", error);
+      chrome.runtime.sendMessage({
+        action: "ttsError",
+        error: error.toString(),
+      });
+      throw error;
+    }
+  }
 }
